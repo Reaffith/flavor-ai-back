@@ -26,7 +26,10 @@ import { Request } from 'express';
 @Controller('recipes')
 @UseGuards(JwtGuard)
 export class RecipesController {
-  constructor(private readonly recipesService: RecipesService) {}
+  constructor(
+    private readonly recipesService: RecipesService,
+    private readonly usersService: UsersService,
+  ) {}
 
   @Get()
   async getAll(
@@ -56,6 +59,7 @@ export class RecipesController {
       );
     }
 
+
     const newRecipe = await this.recipesService.create(createRecipeDto);
 
     if (!newRecipe) throw new BadRequestException();
@@ -75,6 +79,13 @@ export class RecipesController {
       }
 
       await this.getOne(id);
+
+      if (
+        updateRecipeDto.authorId &&
+        !(await this.usersService.getOne(updateRecipeDto.authorId))
+      ) {
+        throw new BadRequestException('No such author');
+      }
 
       if (!Object.keys(updateRecipeDto).length) {
         throw new BadRequestException('Update data should be provided');

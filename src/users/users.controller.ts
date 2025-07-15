@@ -65,8 +65,9 @@ export class UsersController {
     try {
       await this.getOne(id);
 
-      if (!Object.keys(updateUserDto).length)
+      if (!Object.keys(updateUserDto).length) {
         throw new BadRequestException('Update data should be provided');
+      }
 
       const updatedUser = await this.usersService.update(id, updateUserDto);
 
