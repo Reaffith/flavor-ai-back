@@ -57,8 +57,9 @@ export class UsersController {
     try {
       await this.getOne(id);
 
-      if (!Object.keys(updateUserDto).length)
+      if (!Object.keys(updateUserDto).length) {
         throw new BadRequestException('Update data should be provided');
+      }
 
       const updatedUser = await this.usersService.update(id, updateUserDto);
 
@@ -76,7 +77,9 @@ export class UsersController {
   async delete(@Param('id', ParseIntPipe) id: number) {
     await this.getOne(id);
 
-    await this.delete(id);
+    const res = await this.usersService.remove(id);
+
+    if (!res) throw new BadRequestException();
 
     return;
   }
