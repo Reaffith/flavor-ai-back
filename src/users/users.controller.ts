@@ -10,6 +10,8 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Req,
+  UnauthorizedException,
   UseGuards,
   ValidationPipe,
 } from '@nestjs/common';
@@ -18,6 +20,7 @@ import { CreateUserDto } from './dto/createUser.dto';
 import { UpdateUserDto } from './dto/updateUser.dto';
 import { Prisma } from 'generated/prisma';
 import { JwtGuard } from 'src/auth/guards/jwt.guard';
+import { Request } from 'express';
 
 @Controller('users')
 export class UsersController {
@@ -53,7 +56,12 @@ export class UsersController {
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body(ValidationPipe) updateUserDto: UpdateUserDto,
+    @Req() req: Request,
   ) {
+    if ((req.user as { id: number }).id !== updateUserDto) {
+      throw new UnauthorizedException('Only user can chacnge their account');
+    }
+
     try {
       await this.getOne(id);
 
@@ -73,10 +81,16 @@ export class UsersController {
 
   @Delete(':id')
   @UseGuards(JwtGuard)
-  async delete(@Param('id', ParseIntPipe) id: number) {
-    await this.getOne(id);
+  async delete(@Param('id', ParseIntPipe) id: number, @Req() req: Request) {
+    const user = await this.getOne(id);
 
-    await this.delete(id);
+    if ((req.user as { id: number }).id !== user.id) {
+      throw new UnauthorizedException('Only user can dele thier account');
+    }
+
+    const res = await this.usersService.remove(id);
+
+    if (!res) throw new BadRequestException();
 
     return;
   }
