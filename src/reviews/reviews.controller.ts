@@ -45,6 +45,8 @@ export class ReviewsController {
     if (!(await this.usersService.getOne(authorId))) {
       throw new BadRequestException('No such Author');
     }
+
+    return await this.reviewsService.getAllByAuthor(authorId);
   }
 
   @Post()
