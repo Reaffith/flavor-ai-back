@@ -32,13 +32,15 @@ export class UsersService {
   async update(id: number, updateUserDto: UpdateUserDto) {
     const { password, ...updateData } = updateUserDto;
 
-    return await this.dbService.users.update({
+    const result = await this.dbService.users.update({
       where: { id },
       data: {
         ...updateData,
-        ...(password && { password: await bcrypt.hash(password, 10) }),
+        ...(password && { passwordHash: await bcrypt.hash(password, 10) }),
       },
     });
+
+    return result ? result : null;
   }
 
   async remove(id: number) {
