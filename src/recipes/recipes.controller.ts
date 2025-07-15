@@ -19,11 +19,15 @@ import { CreateRecipeDto } from './dto/createRecipe.dto';
 import { UpdateRecipeDto } from './dto/updateRecipe.dto';
 import { Prisma } from 'generated/prisma';
 import { JwtGuard } from 'src/auth/guards/jwt.guard';
+import { UsersService } from 'src/users/users.service';
 
 @Controller('recipes')
 @UseGuards(JwtGuard)
 export class RecipesController {
-  constructor(private readonly recipesService: RecipesService) {}
+  constructor(
+    private readonly recipesService: RecipesService,
+    private readonly usersService: UsersService,
+  ) {}
 
   @Get()
   async getAll(
@@ -44,6 +48,9 @@ export class RecipesController {
 
   @Post()
   async create(@Body(ValidationPipe) createRecipeDto: CreateRecipeDto) {
+    if (!(await this.usersService.getOne(createRecipeDto.authorId))) {
+      throw new BadRequestException('No such author');
+    }
     const newRecipe = await this.recipesService.create(createRecipeDto);
 
     if (!newRecipe) throw new BadRequestException();
@@ -58,6 +65,13 @@ export class RecipesController {
   ) {
     try {
       await this.getOne(id);
+
+      if (
+        updateRecipeDto.authorId &&
+        !(await this.usersService.getOne(updateRecipeDto.authorId))
+      ) {
+        throw new BadRequestException('No such author');
+      }
 
       if (!Object.keys(updateRecipeDto).length) {
         throw new BadRequestException('Update data should be provided');
